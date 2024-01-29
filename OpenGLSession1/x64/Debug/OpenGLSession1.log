@@ -1,0 +1,6 @@
+﻿  main.cpp
+D:\School\3DProg\MyProgrmaming\OwnTesting\FollowingLearnOpenGL\OpenGLSession1\OpenGLSession1\main.cpp(175,25): warning C4244: 'initializing': conversion from 'double' to 'float', possible loss of data
+D:\School\3DProg\MyProgrmaming\OwnTesting\FollowingLearnOpenGL\OpenGLSession1\OpenGLSession1\main.cpp(189,58): warning C4267: 'argument': conversion from 'size_t' to 'GLsizei', possible loss of data
+D:\School\3DProg\MyProgrmaming\OwnTesting\FollowingLearnOpenGL\OpenGLSession1\OpenGLSession1\main.cpp(191,81): warning C4267: 'argument': conversion from 'size_t' to 'GLsizei', possible loss of data
+D:\School\3DProg\MyProgrmaming\OwnTesting\FollowingLearnOpenGL\OpenGLSession1\OpenGLSession1\main.cpp(191,53): warning C4267: 'argument': conversion from 'size_t' to 'GLint', possible loss of data
+  OpenGLSession1.vcxproj -> D:\School\3DProg\MyProgrmaming\OwnTesting\FollowingLearnOpenGL\OpenGLSession1\x64\Debug\OpenGLSession1.exe
