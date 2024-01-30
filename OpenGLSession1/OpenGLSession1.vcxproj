@@ -138,6 +138,7 @@
     <ClCompile Include="main.cpp" />
     <ClCompile Include="MyObject.cpp" />
     <ClCompile Include="ReadFiles.cpp" />
+    <ClCompile Include="stb_image.cpp" />
     <ClCompile Include="Triangle.cpp" />
     <ClCompile Include="Vertex.cpp" />
   </ItemGroup>
@@ -428,6 +429,7 @@
     <ClInclude Include="Dependencies\includes\glm\vec4.hpp" />
     <ClInclude Include="Dependencies\includes\glm\vector_relational.hpp" />
     <ClInclude Include="Dependencies\includes\KHR\khrplatform.h" />
+    <ClInclude Include="Dependencies\includes\stb_image.h" />
     <ClInclude Include="MyObject.h" />
     <ClInclude Include="ReadFiles.h" />
     <ClInclude Include="Triangle.h" />

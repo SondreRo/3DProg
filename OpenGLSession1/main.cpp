@@ -9,13 +9,18 @@
 #include "MyObject.h"
 #include "glad/glad.h"
 #include "Triangle.h"
+#include "stb_image.h"
+#include <glm/gtc/matrix_transform.hpp>
+#include <glm/gtc/type_ptr.hpp>
 
 void framebuffer_size_callback(GLFWwindow* window, int width, int height);
+void mouse_callback(GLFWwindow* window, double xpos, double ypos);
+void scroll_callback(GLFWwindow* window, double xoffset, double yoffset);
 void processInput(GLFWwindow* window);
 
 // settings
-const unsigned int SCR_WIDTH = 800;
-const unsigned int SCR_HEIGHT = 600;
+unsigned int SCR_WIDTH = 800;
+unsigned int SCR_HEIGHT = 600;
 
 // Vertex Shader
 std::string vertexShaderString = ReadFiles::ReadFileString("vertexShader.glsl");
@@ -24,6 +29,21 @@ const char* vertexShaderSource = vertexShaderString.c_str();
 // Fragment Shader
 std::string fragmentShaderString = ReadFiles::ReadFileString("fragmentShader.glsl");
 const char* fragmentShaderSource = fragmentShaderString.c_str();
+
+float Rotation = 0;
+float OtherRotation = 0;
+float radius = 10.0f;
+glm::vec3 cameraPos = glm::vec3(0.0f, 0.0f, 3.0f);
+glm::vec3 cameraFront = glm::vec3(0.0f, 0.0f, -1.0f);
+glm::vec3 cameraUp = glm::vec3(0.0f, 1.0f, 0.0f);
+
+float deltaTime = 0.0f; // Time between current frame and last frame
+float lastFrame = 0.0f; // Time of last frame
+float yaw = 0;
+float pitch = 0;
+float roll = 0;
+float Zoom = 45;
+
 
 
 int main()
@@ -50,6 +70,9 @@ int main()
     }
     glfwMakeContextCurrent(window);
     glfwSetFramebufferSizeCallback(window, framebuffer_size_callback);
+    glfwSetCursorPosCallback(window, mouse_callback);
+    glfwSetScrollCallback(window, scroll_callback);
+
 
     // glad: load all OpenGL function pointers
     // ---------------------------------------
@@ -59,8 +82,11 @@ int main()
         return -1;
     }
 
-    Triangle myTriangle(0, 1, 2);
-    
+
+    //// LOADING SHADERS.
+    //int width, height, nrChannels;
+    //unsigned char* data = stbi_load("container.jpg", &width, &height, &nrChannels, 0);
+    //
 
     // build and compile our shader program
     // ------------------------------------
@@ -102,6 +128,11 @@ int main()
     glDeleteShader(vertexShader);
     glDeleteShader(fragmentShader);
 
+
+
+    glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
+
+
     // set up vertex data (and buffer(s)) and configure vertex attributes
     // ------------------------------------------------------------------
     // float vertices[] = {
@@ -125,7 +156,8 @@ int main()
     //Vertex::ConvertVectorToFloatVector(myobject.vertices, VectorToDraw,0.1);
 
 
-    
+
+
 
     std::vector<Vertex> myVector;
 	std::vector<Triangle> myTriangles;
@@ -190,8 +222,12 @@ int main()
 
     // render loop
     // -----------
+  
     while (!glfwWindowShouldClose(window))
     {
+        float currentFrame = glfwGetTime();
+        deltaTime = currentFrame - lastFrame;
+        lastFrame = currentFrame;
         // input
         // -----
         processInput(window);
@@ -206,6 +242,45 @@ int main()
         float greenValue = (sin(timeValue) / 2.0f) + 0.5f;
         int vertexColorLocation = glGetUniformLocation(shaderProgram, "ourColor");
         glUniform4f(vertexColorLocation, 0.0f, greenValue, 0.0f, 1.0f);
+
+
+
+        // Matrix
+        // CAMERA
+        glm::vec3 cameraTarget = glm::vec3(0.0f, 0.0f, 0.0f);
+        glm::vec3 cameraDirection = glm::normalize(cameraPos - cameraTarget);
+        glm::vec3 up = glm::vec3(0.0f, 1.0f, 0.0f);
+        glm::vec3 cameraRight = glm::normalize(glm::cross(up, cameraDirection));
+        glm::vec3 cameraUp = glm::cross(cameraDirection, cameraRight);
+
+        glm::vec3 direction;
+        direction.x = cos(glm::radians(yaw)) * cos(glm::radians(pitch));
+        direction.y = sin(glm::radians(pitch));
+        direction.z = sin(glm::radians(yaw)) * cos(glm::radians(pitch));
+
+        glm::mat4 view = glm::lookAt(cameraPos, cameraPos + cameraFront, cameraUp);
+
+        // Model 
+        glm::mat4 model = glm::mat4(1.0f);
+        model = glm::rotate(model, glm::radians(Rotation),glm::vec3(1.0f, 0.0f, 0.0f));
+        model = glm::rotate(model, glm::radians(OtherRotation), glm::vec3(0.0f, 0.0f, 1.0f));
+        
+        // VIEW
+        //glm::mat4 view = glm::translate(view, glm::vec3(0.0f, 0.0f, -3.0f));
+
+    	// Projection
+
+        glm::mat4 projection = glm::perspective(glm::radians(Zoom), (float)SCR_WIDTH / (float)SCR_HEIGHT, 0.1f, 100.0f);
+
+        int modelLocation = glGetUniformLocation(shaderProgram, "model");
+        glUniformMatrix4fv(modelLocation, 1, GL_FALSE, glm::value_ptr(model));
+
+        int viewlLocation = glGetUniformLocation(shaderProgram, "view");
+        glUniformMatrix4fv(viewlLocation, 1, GL_FALSE, glm::value_ptr(view));
+
+        int projectionlLocation = glGetUniformLocation(shaderProgram, "projection");
+        glUniformMatrix4fv(projectionlLocation, 1, GL_FALSE, glm::value_ptr(projection));
+
 
     	glUseProgram(shaderProgram);
       
@@ -252,13 +327,40 @@ void processInput(GLFWwindow* window)
 {
     if (glfwGetKey(window, GLFW_KEY_ESCAPE) == GLFW_PRESS)
         glfwSetWindowShouldClose(window, true);
-
-    if (glfwGetKey(window, GLFW_KEY_A) == GLFW_PRESS)
+    /*
+    if (glfwGetKey(window, GLFW_KEY_Y) == GLFW_PRESS)
         glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
 
-    if (glfwGetKey(window, GLFW_KEY_D) == GLFW_PRESS)
+    if (glfwGetKey(window, GLFW_KEY_T) == GLFW_PRESS)
         glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
+    if (glfwGetKey(window, GLFW_KEY_A) == GLFW_PRESS)
+        Rotation += 0.3;
+    if (glfwGetKey(window, GLFW_KEY_D) == GLFW_PRESS)
+        Rotation -= 0.3;
 
+    if (glfwGetKey(window, GLFW_KEY_W) == GLFW_PRESS)
+        OtherRotation += 0.3;
+    if (glfwGetKey(window, GLFW_KEY_S) == GLFW_PRESS)
+        OtherRotation -= 0.3;
+
+    if (glfwGetKey(window, GLFW_KEY_G) == GLFW_PRESS)
+        radius -= 0.3;*/
+
+    const float cameraSpeed = 2.5f * deltaTime;; // adjust accordingly
+    if (glfwGetKey(window, GLFW_KEY_W) == GLFW_PRESS)
+        cameraPos += cameraSpeed * cameraFront;
+    if (glfwGetKey(window, GLFW_KEY_S) == GLFW_PRESS)
+        cameraPos -= cameraSpeed * cameraFront;
+    if (glfwGetKey(window, GLFW_KEY_A) == GLFW_PRESS)
+        cameraPos -= glm::normalize(glm::cross(cameraFront, cameraUp)) *
+        cameraSpeed;
+    if (glfwGetKey(window, GLFW_KEY_D) == GLFW_PRESS)
+        cameraPos += glm::normalize(glm::cross(cameraFront, cameraUp)) *
+        cameraSpeed;
+    if (glfwGetKey(window, GLFW_KEY_Q) == GLFW_PRESS)
+        cameraPos -= cameraUp * cameraSpeed;
+    if (glfwGetKey(window, GLFW_KEY_E) == GLFW_PRESS)
+        cameraPos += cameraUp * cameraSpeed;
 }
 
 // glfw: whenever the window size changed (by OS or user resize) this callback function executes
@@ -267,5 +369,44 @@ void framebuffer_size_callback(GLFWwindow* window, int width, int height)
 {
     // make sure the viewport matches the new window dimensions; note that width and 
     // height will be significantly larger than specified on retina displays.
+    SCR_HEIGHT = height;
+    SCR_WIDTH = width;
     glViewport(0, 0, width, height);
+}
+float lastX = 400, lastY = 300;
+bool firstMouse = true;
+void mouse_callback(GLFWwindow* window, double xpos, double ypos)
+{
+    if (firstMouse)
+    {
+        lastX = xpos;
+        lastY = ypos;
+        firstMouse = false;
+    }
+    float xoffset = xpos - lastX;
+    float yoffset = lastY - ypos;
+    lastX = xpos;
+    lastY = ypos;
+    float sensitivity = 0.1f;
+    xoffset *= sensitivity;
+    yoffset *= sensitivity;
+    yaw += xoffset;
+    pitch += yoffset;
+    if (pitch > 89.0f)
+        pitch = 89.0f;
+    if (pitch < -89.0f)
+        pitch = -89.0f;
+    glm::vec3 direction;
+    direction.x = cos(glm::radians(yaw)) * cos(glm::radians(pitch));
+    direction.y = sin(glm::radians(pitch));
+    direction.z = sin(glm::radians(yaw)) * cos(glm::radians(pitch));
+    cameraFront = glm::normalize(direction);
+}
+void scroll_callback(GLFWwindow* window, double xoffset, double yoffset)
+{
+    Zoom -= (float)yoffset;
+    if (Zoom < 1.0f)
+        Zoom = 1.0f;
+    if (Zoom > 45.0f)
+        Zoom = 45.0f;
 }
