@@ -8,6 +8,7 @@
 //#include "glm/glm.hpp"
 #include <vector>
 #include "MyObject.h"
+#include "glad/glad.h"
 
 void framebuffer_size_callback(GLFWwindow* window, int width, int height);
 void processInput(GLFWwindow* window);
@@ -109,7 +110,7 @@ int main()
     // };
 
     //std::vector<Vertex> MyVectorOfPoints = ReadFiles::ReadFileVertexData("D:/School/3DProg/MyProgrmaming/OwnTesting/FollowingLearnOpenGL/OpenGLSession1/MyAmazingThing.txt");
-    std::vector<Vertex> MyVectorOfPoints = ReadFiles::ReadFileVertexData("D:/School/Matte3/09.01/Testing/Oppgave3.txt");
+    std::vector<Vertex> MyVectorOfPoints = ReadFiles::ReadFileVertexData("D:/School/Matte3/09.01/Testing/Oppgave2.txt");
    
     std::vector<float> VectorToDraw;
 
@@ -118,7 +119,7 @@ int main()
    
     // Gismo
     MyObject myobject;
-    //Vertex::ConvertVectorToFloatVector(myobject.vertices, VectorToDraw,0.1);
+    Vertex::ConvertVectorToFloatVector(myobject.vertices, VectorToDraw,0.1);
 
 
     unsigned int indices[] = {
