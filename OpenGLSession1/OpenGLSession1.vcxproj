@@ -138,6 +138,7 @@
     <ClCompile Include="main.cpp" />
     <ClCompile Include="MyObject.cpp" />
     <ClCompile Include="ReadFiles.cpp" />
+    <ClCompile Include="Triangle.cpp" />
     <ClCompile Include="Vertex.cpp" />
   </ItemGroup>
   <ItemGroup>
@@ -429,6 +430,7 @@
     <ClInclude Include="Dependencies\includes\KHR\khrplatform.h" />
     <ClInclude Include="MyObject.h" />
     <ClInclude Include="ReadFiles.h" />
+    <ClInclude Include="Triangle.h" />
     <ClInclude Include="Vertex.h" />
   </ItemGroup>
   <ItemGroup>
@@ -569,15 +571,13 @@
     <None Include="Dependencies\includes\glm\gtx\vector_query.inl" />
     <None Include="Dependencies\includes\glm\gtx\wrap.inl" />
     <None Include="Dependencies\libs\glfw3.dll" />
+    <None Include="fragmentShader.glsl" />
+    <None Include="vertexShader.glsl" />
   </ItemGroup>
   <ItemGroup>
     <Library Include="Dependencies\libs\glfw3.lib" />
     <Library Include="Dependencies\libs\glfw3dll.lib" />
     <Library Include="Dependencies\libs\glfw3_mt.lib" />
-  </ItemGroup>
-  <ItemGroup>
-    <Text Include="fragmentShader.glsl" />
-    <Text Include="vertexShader.glsl" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

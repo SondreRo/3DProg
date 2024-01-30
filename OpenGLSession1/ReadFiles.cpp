@@ -60,3 +60,49 @@ std::string ReadFiles::ReadFileString(const char* path)
 		return "";
 	}
 }
+
+void ReadFiles::ReadOBJ(const char* path, std::vector<Vertex>& Vertices, std::vector<Triangle>& Triangles)
+{
+	std::ifstream in;
+	in.open(path);
+	std::string line;
+	if (in.is_open())
+	{
+		while (!in.eof())
+		{
+			char firstChar;
+			in >> firstChar;
+
+			switch (firstChar)
+			{
+			case '#':
+				std::getline(in, line);
+				std::cout << line << std::endl;
+				break;
+
+			case 'v':
+				float x, y, z, r, g, b;
+				in >> x
+				>> y
+				>> z
+				>> r
+				>> g
+				>> b;
+
+				Vertices.emplace_back(x,y,z,r,g,b);
+				break;
+
+			case 'f':
+				unsigned int my0, my1, my2;
+				in >> my0 >> my1 >> my2;
+				Triangles.emplace_back(my0-1,my1-1,my2-1);
+				break;
+			default:
+				std::getline(in, line);
+				break;
+			}
+		}
+		std::cout << "ModelLoaded";
+		in.close();
+	}
+}
