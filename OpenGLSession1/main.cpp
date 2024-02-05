@@ -12,6 +12,10 @@
 #include "stb_image.h"
 #include <glm/gtc/matrix_transform.hpp>
 #include <glm/gtc/type_ptr.hpp>
+#include "Line.h"
+#include "Camera.h"
+#include "Mesh.h"
+#include "glm/gtx/rotate_vector.hpp"
 
 void framebuffer_size_callback(GLFWwindow* window, int width, int height);
 void mouse_callback(GLFWwindow* window, double xpos, double ypos);
@@ -32,20 +36,16 @@ const char* fragmentShaderSource = fragmentShaderString.c_str();
 
 float Rotation = 0;
 float OtherRotation = 0;
-float radius = 10.0f;
-glm::vec3 cameraPos = glm::vec3(0.0f, 0.0f, 3.0f);
-glm::vec3 cameraFront = glm::vec3(0.0f, 0.0f, -1.0f);
-glm::vec3 cameraUp = glm::vec3(0.0f, 1.0f, 0.0f);
 
 float deltaTime = 0.0f; // Time between current frame and last frame
 float lastFrame = 0.0f; // Time of last frame
-float yaw = 0;
-float pitch = 0;
-float roll = 0;
+
 float Zoom = 45;
 
 
-
+Camera myCamera;
+std::vector<Mesh*> Meshes;
+Mesh* SelectedMesh;
 int main()
 {
     // glfw: initialize and configure
@@ -70,6 +70,8 @@ int main()
     }
     glfwMakeContextCurrent(window);
     glfwSetFramebufferSizeCallback(window, framebuffer_size_callback);
+    glfwSwapInterval(0);
+
     glfwSetCursorPosCallback(window, mouse_callback);
     glfwSetScrollCallback(window, scroll_callback);
 
@@ -128,101 +130,40 @@ int main()
     glDeleteShader(vertexShader);
     glDeleteShader(fragmentShader);
 
+    myCamera.AddShaderProgramPath(shaderProgram);
 
 
     glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
-
-
-    // set up vertex data (and buffer(s)) and configure vertex attributes
-    // ------------------------------------------------------------------
-    // float vertices[] = {
-    //     // positions // colors
-    //     0.5f, -0.5f, 0.0f, 1.0f, 0.0f, 0.0f, // bottom right
-    //     -0.5f, -0.5f, 0.0f, 0.0f, 1.0f, 0.0f, // bottom left
-    //     0.0f, 0.5f, 0.0f, 0.0f, 0.0f, 1.0f // top
-    // };
-
-    //std::vector<Vertex> MyVectorOfPoints = ReadFiles::ReadFileVertexData("D:/School/3DProg/MyProgrmaming/OwnTesting/FollowingLearnOpenGL/OpenGLSession1/MyAmazingThing.txt");
-    std::vector<Vertex> MyVectorOfPoints = ReadFiles::ReadFileVertexData("D:/School/Matte3/09.01/Testing/Oppgave2.txt");
-   
-    std::vector<float> VectorToDraw;
-    std::vector<unsigned int> IndicesToDraw;
-
-    Vertex::AddOffsetToVector(MyVectorOfPoints, 0, 0, 0);
-    //Vertex::ConvertVectorToFloatVector(MyVectorOfPoints, VectorToDraw, 0.1f,0.1f,0.05f);
-   
-    // Gismo
-    MyObject myobject;
-    //Vertex::ConvertVectorToFloatVector(myobject.vertices, VectorToDraw,0.1);
-
-
-
-
-
-    std::vector<Vertex> myVector;
-	std::vector<Triangle> myTriangles;
-
-
-    //myVector.emplace_back(0, 0, 0, 1, 0, 0);        //0
-    //myVector.emplace_back(0.5, 0, 0, 0, 1, 0);      //1
-    //myVector.emplace_back(0, 0.5, 0, 0, 0, 1);      //2
-    //myVector.emplace_back(-0.5, 0, 0, 0, 1, 0);     //3
-    //myVector.emplace_back(0, -0.5, 0, 1, 0, 0);     //4
-    //myVector.emplace_back(-0.5, -0.5, 0, 1, 0, 0);  //5
-
-  
-
-    //myTriangles.emplace_back(0, 1, 2);
-    //myTriangles.emplace_back(3, 0, 2);
-    //myTriangles.emplace_back(4, 1, 0);
-    //myTriangles.emplace_back(3, 4, 0);
-    //myTriangles.emplace_back(5, 4, 3);
-
-
-
-    ReadFiles::ReadOBJ("C:/Users/soroe/Documents/CubeToTestWith.obj", myVector, myTriangles);
-
-    Vertex::ConvertVectorToFloatVector(myVector, VectorToDraw, 1);
-    Triangle::ConvertArrayToVector(myTriangles, IndicesToDraw);
-
-
-    unsigned int VBO, VAO, EBO;
-    glGenVertexArrays(1, &VAO);
-    glGenBuffers(1, &VBO);
-    glGenBuffers(1, &EBO);
-    // bind the Vertex Array Object first, then bind and set vertex buffer(s), and then configure vertex attributes(s).
-    glBindVertexArray(VAO);
-
-    glBindBuffer(GL_ARRAY_BUFFER, VBO);
-    glBufferData(GL_ARRAY_BUFFER, VectorToDraw.size() *  sizeof(float), VectorToDraw.data(), GL_STATIC_DRAW);
-
-    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, EBO);
-    glBufferData(GL_ELEMENT_ARRAY_BUFFER, IndicesToDraw.size() * sizeof(unsigned int), IndicesToDraw.data(), GL_STATIC_DRAW);
-
-    // position attribute
-    glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 6 * sizeof(float), (void*)0);
-    glEnableVertexAttribArray(0);
-    // color attribute
-    glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, 6 * sizeof(float), (void*)(3 * sizeof(float)));
-    glEnableVertexAttribArray(1);
-
-    // note that this is allowed, the call to glVertexAttribPointer registered VBO as the vertex attribute's bound vertex buffer object so afterwards we can safely unbind
-    glBindBuffer(GL_ARRAY_BUFFER, 0);
-
-    // remember: do NOT unbind the EBO while a VAO is active as the bound element buffer object IS stored in the VAO; keep the EBO bound.
-    //glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
-
-    // You can unbind the VAO afterwards so other VAO calls won't accidentally modify this VAO, but this rarely happens. Modifying other
-    // VAOs requires a call to glBindVertexArray anyways so we generally don't unbind VAOs (nor VBOs) when it's not directly necessary.
-    glBindVertexArray(0);
     glEnable(GL_DEPTH_TEST);
 
-    // uncomment this call to draw in wireframe polygons.
-    //glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
+    
+    Mesh MyTestMesh;
+    Mesh MyTestMeshMonke;
+    Mesh Mountain;
+    Meshes.push_back(&MyTestMesh);
+    Meshes.push_back(&MyTestMeshMonke);
+    Meshes.push_back(&Mountain);
+
+
+
+    ReadFiles::ReadOBJ("C:/Users/soroe/Documents/CubeToTestWith.obj", MyTestMesh);
+    ReadFiles::ReadOBJ("C:/Users/soroe/Documents/monke.obj", MyTestMeshMonke);
+    ReadFiles::ReadOBJ("C:/Users/soroe/Documents/mountain1.obj", Mountain);
+
+
+	for (auto Mesh : Meshes)
+    {
+        Mesh->Bind(shaderProgram);
+    }
+
+ 
+   
+    MyTestMeshMonke.modelMat = glm::translate(glm::mat4(1), glm::vec3(3, 0, 0));
+	Mountain.modelMat = glm::translate(glm::mat4(1), glm::vec3(-3, 0, 0));
 
     // render loop
     // -----------
-  
+    int projectionlLocation = glGetUniformLocation(shaderProgram, "projection");
     while (!glfwWindowShouldClose(window))
     {
         float currentFrame = glfwGetTime();
@@ -238,54 +179,40 @@ int main()
         glClear(GL_COLOR_BUFFER_BIT);
         glClear(GL_DEPTH_BUFFER_BIT);
 
-        float timeValue = glfwGetTime();
-        float greenValue = (sin(timeValue) / 2.0f) + 0.5f;
-        int vertexColorLocation = glGetUniformLocation(shaderProgram, "ourColor");
-        glUniform4f(vertexColorLocation, 0.0f, greenValue, 0.0f, 1.0f);
+        //float timeValue = glfwGetTime();
+        //float greenValue = (sin(timeValue) / 2.0f) + 0.5f;
+        //int vertexColorLocation = glGetUniformLocation(shaderProgram, "ourColor");
+        //glUniform4f(vertexColorLocation, 0.0f, greenValue, 0.0f, 1.0f);
 
-
+        //std::cout << 1 / deltaTime << std::endl;
 
         // Matrix
         // CAMERA
-        glm::vec3 cameraTarget = glm::vec3(0.0f, 0.0f, 0.0f);
-        glm::vec3 cameraDirection = glm::normalize(cameraPos - cameraTarget);
-        glm::vec3 up = glm::vec3(0.0f, 1.0f, 0.0f);
-        glm::vec3 cameraRight = glm::normalize(glm::cross(up, cameraDirection));
-        glm::vec3 cameraUp = glm::cross(cameraDirection, cameraRight);
+        myCamera.tick(deltaTime);
 
-        glm::vec3 direction;
-        direction.x = cos(glm::radians(yaw)) * cos(glm::radians(pitch));
-        direction.y = sin(glm::radians(pitch));
-        direction.z = sin(glm::radians(yaw)) * cos(glm::radians(pitch));
-
-        glm::mat4 view = glm::lookAt(cameraPos, cameraPos + cameraFront, cameraUp);
 
         // Model 
-        glm::mat4 model = glm::mat4(1.0f);
-        model = glm::rotate(model, glm::radians(Rotation),glm::vec3(1.0f, 0.0f, 0.0f));
-        model = glm::rotate(model, glm::radians(OtherRotation), glm::vec3(0.0f, 0.0f, 1.0f));
-        
+    
         // VIEW
         //glm::mat4 view = glm::translate(view, glm::vec3(0.0f, 0.0f, -3.0f));
 
     	// Projection
 
-        glm::mat4 projection = glm::perspective(glm::radians(Zoom), (float)SCR_WIDTH / (float)SCR_HEIGHT, 0.1f, 100.0f);
+        glm::mat4 projection = glm::perspective(glm::radians(Zoom), (float)SCR_WIDTH / (float)SCR_HEIGHT, 0.01f, 1000.0f);
 
-        int modelLocation = glGetUniformLocation(shaderProgram, "model");
-        glUniformMatrix4fv(modelLocation, 1, GL_FALSE, glm::value_ptr(model));
+ 
 
-        int viewlLocation = glGetUniformLocation(shaderProgram, "view");
-        glUniformMatrix4fv(viewlLocation, 1, GL_FALSE, glm::value_ptr(view));
+         /// SEND TO CAMERA
+        
 
-        int projectionlLocation = glGetUniformLocation(shaderProgram, "projection");
+       
         glUniformMatrix4fv(projectionlLocation, 1, GL_FALSE, glm::value_ptr(projection));
 
 
     	glUseProgram(shaderProgram);
       
 
-        glBindVertexArray(VAO); // seeing as we only have a single VAO there's no need to bind it every time, but we'll do so to keep things a bit more organized
+         // seeing as we only have a single VAO there's no need to bind it every time, but we'll do so to keep things a bit more organized
 
         //glDrawArrays(GL_TRIANGLES, 0, 6);
         glLineWidth(4);
@@ -297,7 +224,12 @@ int main()
         //glDrawArrays(GL_LINES, MyVectorOfPoints.size(), myobject.vertices.size()-1);
         //////////////////////
 
-		glDrawElements(GL_TRIANGLES, IndicesToDraw.size(), GL_UNSIGNED_INT, 0);
+        //MyTestMeshMonke.modelMat = glm::translate(MyTestMeshMonke.modelMat, glm::vec3(1*deltaTime, 0, 0));
+        MyTestMeshMonke.modelMat = glm::rotate(MyTestMeshMonke.modelMat, 0.5f * deltaTime, glm::vec3(1.0f, 0.0f, 0.0f));
+        for (auto Mesh : Meshes)
+        {
+            Mesh->Draw();
+        }
 
         
         // glBindVertexArray(0); // no need to unbind it every time 
@@ -310,9 +242,11 @@ int main()
 
     // optional: de-allocate all resources once they've outlived their purpose:
     // ------------------------------------------------------------------------
-    glDeleteVertexArrays(1, &VAO);
-    glDeleteBuffers(1, &VBO);
-    glDeleteBuffers(1, &EBO);
+
+    for (auto Mesh : Meshes)
+    {
+        Mesh->CleanUp();
+    }
     glDeleteProgram(shaderProgram);
 
     // glfw: terminate, clearing all previously allocated GLFW resources.
@@ -321,46 +255,96 @@ int main()
     return 0;
 }
 
+Mesh* GetClosestMesh(std::vector<Mesh*> &inMeshes, Camera inCamera)
+{
+    float ClosestDistance = 100000000;
+    Mesh* ClosestMesh = inMeshes[0];
+    for (auto mesh : inMeshes)
+    {
+        float currentDistance = glm::distance(inCamera.GetLocation(), mesh->GetLocation());
+	    if (currentDistance < ClosestDistance)
+	    {
+            ClosestMesh = mesh;
+            ClosestDistance = currentDistance;
+	    }
+    }
+    SelectedMesh = ClosestMesh;
+	return ClosestMesh;
+}
+
 // process all input: query GLFW whether relevant keys are pressed/released this frame and react accordingly
 // ---------------------------------------------------------------------------------------------------------
 void processInput(GLFWwindow* window)
 {
     if (glfwGetKey(window, GLFW_KEY_ESCAPE) == GLFW_PRESS)
         glfwSetWindowShouldClose(window, true);
-    /*
+
+
+    // // // Change Poligon mode
     if (glfwGetKey(window, GLFW_KEY_Y) == GLFW_PRESS)
         glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
 
     if (glfwGetKey(window, GLFW_KEY_T) == GLFW_PRESS)
         glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
-    if (glfwGetKey(window, GLFW_KEY_A) == GLFW_PRESS)
-        Rotation += 0.3;
-    if (glfwGetKey(window, GLFW_KEY_D) == GLFW_PRESS)
-        Rotation -= 0.3;
+ 
 
+    // // // Camera Input
     if (glfwGetKey(window, GLFW_KEY_W) == GLFW_PRESS)
-        OtherRotation += 0.3;
+    {
+        myCamera.AddMovement(myCamera.GetForwardVector(), 1, deltaTime);
+    }
+		
     if (glfwGetKey(window, GLFW_KEY_S) == GLFW_PRESS)
-        OtherRotation -= 0.3;
-
-    if (glfwGetKey(window, GLFW_KEY_G) == GLFW_PRESS)
-        radius -= 0.3;*/
-
-    const float cameraSpeed = 2.5f * deltaTime;; // adjust accordingly
-    if (glfwGetKey(window, GLFW_KEY_W) == GLFW_PRESS)
-        cameraPos += cameraSpeed * cameraFront;
-    if (glfwGetKey(window, GLFW_KEY_S) == GLFW_PRESS)
-        cameraPos -= cameraSpeed * cameraFront;
+    {
+        myCamera.AddMovement(-myCamera.GetForwardVector(), 1, deltaTime);
+    }
     if (glfwGetKey(window, GLFW_KEY_A) == GLFW_PRESS)
-        cameraPos -= glm::normalize(glm::cross(cameraFront, cameraUp)) *
-        cameraSpeed;
+    {
+        myCamera.AddMovement(myCamera.GetRightVector(), 1, deltaTime);
+    }
     if (glfwGetKey(window, GLFW_KEY_D) == GLFW_PRESS)
-        cameraPos += glm::normalize(glm::cross(cameraFront, cameraUp)) *
-        cameraSpeed;
-    if (glfwGetKey(window, GLFW_KEY_Q) == GLFW_PRESS)
-        cameraPos -= cameraUp * cameraSpeed;
+    {
+        myCamera.AddMovement(-myCamera.GetRightVector(),1, deltaTime);
+    }
     if (glfwGetKey(window, GLFW_KEY_E) == GLFW_PRESS)
-        cameraPos += cameraUp * cameraSpeed;
+    {
+        myCamera.AddMovement(myCamera.GetUpVector(), 1, deltaTime);
+    }
+    if (glfwGetKey(window, GLFW_KEY_Q) == GLFW_PRESS)
+    {
+        myCamera.AddMovement(-myCamera.GetUpVector(),1, deltaTime);
+    }
+
+
+    if (glfwGetKey(window, GLFW_KEY_UP) == GLFW_PRESS)
+    {
+        myCamera.SetSpeed(myCamera.GetSpeed() + 1.0f*deltaTime);
+        std::cout << myCamera.GetSpeed() << std::endl;
+    }
+    if (glfwGetKey(window, GLFW_KEY_DOWN) == GLFW_PRESS)
+    {
+        myCamera.SetSpeed(myCamera.GetSpeed() - 1.0f * deltaTime);
+        std::cout << myCamera.GetSpeed() << std::endl;
+    }
+
+    if (glfwGetKey(window, GLFW_KEY_V) == GLFW_PRESS)
+    {
+        std::cout << GetClosestMesh(Meshes, myCamera)->GetName() << std::endl;
+    }
+    if (glfwGetKey(window, GLFW_KEY_RIGHT) == GLFW_PRESS)
+    {
+       if(SelectedMesh)
+       {
+           SelectedMesh->modelMat = glm::rotate(SelectedMesh->modelMat, 1.0f * deltaTime, glm::vec3(0, 1, 0));
+       }
+    }
+    if (glfwGetKey(window, GLFW_KEY_LEFT) == GLFW_PRESS)
+    {
+        if (SelectedMesh)
+        {
+            SelectedMesh->modelMat = glm::rotate(SelectedMesh->modelMat, -1.0f * deltaTime, glm::vec3(0, 1, 0));
+        }
+    }
 }
 
 // glfw: whenever the window size changed (by OS or user resize) this callback function executes
@@ -373,34 +357,10 @@ void framebuffer_size_callback(GLFWwindow* window, int width, int height)
     SCR_WIDTH = width;
     glViewport(0, 0, width, height);
 }
-float lastX = 400, lastY = 300;
-bool firstMouse = true;
+
 void mouse_callback(GLFWwindow* window, double xpos, double ypos)
 {
-    if (firstMouse)
-    {
-        lastX = xpos;
-        lastY = ypos;
-        firstMouse = false;
-    }
-    float xoffset = xpos - lastX;
-    float yoffset = lastY - ypos;
-    lastX = xpos;
-    lastY = ypos;
-    float sensitivity = 0.1f;
-    xoffset *= sensitivity;
-    yoffset *= sensitivity;
-    yaw += xoffset;
-    pitch += yoffset;
-    if (pitch > 89.0f)
-        pitch = 89.0f;
-    if (pitch < -89.0f)
-        pitch = -89.0f;
-    glm::vec3 direction;
-    direction.x = cos(glm::radians(yaw)) * cos(glm::radians(pitch));
-    direction.y = sin(glm::radians(pitch));
-    direction.z = sin(glm::radians(yaw)) * cos(glm::radians(pitch));
-    cameraFront = glm::normalize(direction);
+    myCamera.AddRotation(xpos, ypos);
 }
 void scroll_callback(GLFWwindow* window, double xoffset, double yoffset)
 {

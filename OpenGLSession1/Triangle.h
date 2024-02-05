@@ -7,8 +7,9 @@ class Triangle
 public:
 	Triangle();
 	Triangle(int Vert1, int Vert2, int Vert3);
-	std::vector<unsigned int> VerticesIndex;
+	unsigned int vert1;
+	unsigned int vert2;
+	unsigned int vert3;
 
-	static void ConvertArrayToVector(std::vector<Triangle>& Triangles, std::vector<unsigned int>& VerticesIndex);
 };
 

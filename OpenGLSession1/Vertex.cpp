@@ -49,6 +49,7 @@ void Vertex::MultiplyPos(float inX, float inY, float inZ)
 
 void Vertex::ConvertVectorToFloatVector(std::vector<Vertex>& inVector, std::vector<float>& outVector, float scale)
 {
+	outVector.clear();
 	for (int i{}; i < inVector.size(); i++)
 	{
 		inVector[i].MultiplyPos(scale);
@@ -65,6 +66,7 @@ void Vertex::ConvertVectorToFloatVector(std::vector<Vertex>& inVector, std::vect
 void Vertex::ConvertVectorToFloatVector(std::vector<Vertex>& inVector, std::vector<float>& outVector, float xScale,
 	float yScale, float zScale)
 {
+	outVector.clear();
 	for (int i{}; i < inVector.size(); i++)
 	{
 		inVector[i].MultiplyPos(xScale, yScale, zScale);

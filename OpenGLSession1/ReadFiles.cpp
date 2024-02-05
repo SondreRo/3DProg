@@ -56,18 +56,21 @@ std::string ReadFiles::ReadFileString(const char* path)
 	}
 	else
 	{
-				std::cout << "Failed to open file: " << path << std::endl;
+		std::cout << "Failed to open file: " << path << std::endl;
 		return "";
 	}
 }
 
-void ReadFiles::ReadOBJ(const char* path, std::vector<Vertex>& Vertices, std::vector<Triangle>& Triangles)
+void ReadFiles::ReadOBJ(const char* path, Mesh& inMesh)
 {
 	std::ifstream in;
 	in.open(path);
 	std::string line;
+	std::string name;
 	if (in.is_open())
 	{
+		std::cout << "-------------------------------" << std::endl;
+		std::cout << "Starting to load model from: " << path << std::endl;
 		while (!in.eof())
 		{
 			char firstChar;
@@ -89,20 +92,28 @@ void ReadFiles::ReadOBJ(const char* path, std::vector<Vertex>& Vertices, std::ve
 				>> g
 				>> b;
 
-				Vertices.emplace_back(x,y,z,r,g,b);
+				inMesh.vertices.emplace_back(x,y,z,r,g,b);
 				break;
 
 			case 'f':
 				unsigned int my0, my1, my2;
 				in >> my0 >> my1 >> my2;
-				Triangles.emplace_back(my0-1,my1-1,my2-1);
+				inMesh.indices.emplace_back(my0-1,my1-1,my2-1);
+				break;
+
+			case 'o':
+				std::getline(in, line);
+				name = line;
+				std::cout << "Name of Model: " << line << std::endl;
+				inMesh.SetName(name);
 				break;
 			default:
 				std::getline(in, line);
 				break;
 			}
 		}
-		std::cout << "ModelLoaded";
 		in.close();
+		std::cout << "Amount of Vertices: " << inMesh.vertices.size() << std::endl;
+		std::cout << "Amount of Triangles: " << inMesh.indices.size() << std::endl;
 	}
 }
